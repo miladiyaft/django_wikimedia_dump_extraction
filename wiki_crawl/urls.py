@@ -1,8 +1,7 @@
 from django.urls import path
-from . import views
+from .views import ParseAndSaveView
 
 
 urlpatterns = [
-    path('', views.main, name="main"),
-    path('save_data/', views.save_data, name="save_data"),
+    path('save_data/', ParseAndSaveView.as_view(), name="save_data"),
 ]
