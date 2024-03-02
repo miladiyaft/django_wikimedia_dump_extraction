@@ -34,4 +34,7 @@ class ExternalLink(models.Model):
     anchor_text = models.CharField(max_length=200)
     type = models.CharField(max_length=20)
 
+class Tag(models.Model):
+    content_id = models.ForeignKey(Content,on_delete=models.CASCADE)
+    tag_text = models.CharField(max_length=200)
      

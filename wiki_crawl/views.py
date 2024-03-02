@@ -2,7 +2,7 @@
 from django.http import HttpResponse
 from django.views import View
 from django.views import View
-from .models import Content, Video, Image, InternalLink, ExternalLink
+from .models import Content, Video, Image, InternalLink, ExternalLink, Tag
 from bs4 import BeautifulSoup
 import os
 
@@ -10,7 +10,6 @@ class ParseAndSaveView(View):
     def get(self, request):
         root_directory = 'files/fa/articles'
         # total_data = []
-        counter = 0
         for root, dirs, files in os.walk(root_directory):
             for file in files:
                 if file.endswith('.html'):
@@ -33,14 +32,12 @@ class ParseAndSaveView(View):
                                 else:
                                     html_content += str(tag)
                                     
-                        print('='*30)
-                        print(html_content)
-                        print('='*30)
                                    
                         videos = [{"url":vid.get('resource')} for vid in soup.find_all('video')]
                         images = [{"url":img.get('src'),"alt":img.get('alt')} for img in soup.find_all('img')]
                         links = [{"url":link.get('href'),"anchor_text":link.text} for link in soup.find_all('a')]
-                        tags = [tag for tag in soup.find_all('b')]
+                        cat_links = soup.find('div',{'id':'catlinks'})
+                        
 
                         # Save data to the database
                         #Content
@@ -49,30 +46,43 @@ class ParseAndSaveView(View):
                                           main_content=html_content)
                         content.save()
 
-                        # print('='*30)
-                        # print(content.content_id)
-                        # print('='*30)
-
-                        content_instance = Content.objects.get(content_id= content.content_id)
+                        content_instance = Content.objects.get(content_id=content.content_id)
 
                         # Videos
                         if videos:
                             for video in videos:
                                 Video.objects.create(url=video['url'],content_id=content_instance)
                         else:
-                            continue        
+                            pass        
 
                         # Images
-                        # print('='*30)
-                        # print(content_instance.content_id)
-                        # print('='*30)
                         if images:
                             for img in images:
-                                Image.objects.create(url=img['url'],alt=img['alt'],content_id=content_instance)
-                                # image = Image(url=img['url'],alt=img['alt'],content_id=content_instance)
-                                # image.save()
+                                # Image.objects.create(url=img['url'],alt=img['alt'],content_id=content_instance)
+                                image = Image(url=img['url'],alt=img['alt'],content_id=content_instance)
+                                image.save()
                         else:
-                            continue
+                            pass
+
+                        # External links or Internal links
+                        if links:  
+                            for link in links:
+                                if link['url'] and link['url'].startswith("/wiki/"): 
+                                    InternalLink.objects.create(url=link['url'], anchor_text=link['anchor_text'], type="internal", content_id = content_instance)
+                                elif link['url']:
+                                    ExternalLink.objects.create(url=link['url'], anchor_text=link['anchor_text'], type="external", content_id = content_instance)
+                                else:
+                                    continue    
+                        else:
+                            pass
+
+                        # Tags
+                        if cat_links:
+                            cat_links_ul = cat_links.find('ul')
+                            if cat_links_ul:
+                                tags = [{'text':tag.text}for tag in cat_links_ul.find_all('li')]
+                                for tag in tags:
+                                    Tag.objects.create(tag_text=tag['text'], content_id = content_instance)
                         
 
 
