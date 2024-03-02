@@ -1,4 +1,3 @@
-# from django.shortcuts import render
 from django.http import HttpResponse
 from django.views import View
 from django.views import View
@@ -9,7 +8,6 @@ import os
 class ParseAndSaveView(View):
     def get(self, request):
         root_directory = 'files/fa/articles'
-        # total_data = []
         for root, dirs, files in os.walk(root_directory):
             for file in files:
                 if file.endswith('.html'):
@@ -21,7 +19,6 @@ class ParseAndSaveView(View):
                         head_title = soup.find('title')
                         desc = [desc.text for desc in soup.find_all('meta', {'name': 'description'})]
                         main_content = soup.find('div',{'id':'bodyContent'})
-                        # main_content_h2 = main_content.find_all('h2')
 
                         html_content = ""
                         if main_content:
@@ -58,7 +55,7 @@ class ParseAndSaveView(View):
                         # Images
                         if images:
                             for img in images:
-                                # Image.objects.create(url=img['url'],alt=img['alt'],content_id=content_instance)
+                                # Or Image.objects.create(url=img['url'],alt=img['alt'],content_id=content_instance)
                                 image = Image(url=img['url'],alt=img['alt'],content_id=content_instance)
                                 image.save()
                         else:
@@ -90,9 +87,3 @@ class ParseAndSaveView(View):
 
         return HttpResponse("Data parsed and saved successfully.")
 
-# page = wikipedia.page("tiger")
-
-# ref = page.content
-# print('='*30)
-# print(ref)
-# print('='*30)
